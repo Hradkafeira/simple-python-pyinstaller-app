@@ -9,13 +9,18 @@ node {
         docker.image('qnib/pytest').inside {
             sh 'py.test --verbose --junit-xml test-reports/results.xml sources/test_calc.py'
         }
+        junit 'test-reports/results.xml'
     }
 
-    stage('Post') {
-        try {
-            junit 'test-reports/results.xml'
-        } finally {
-            // Perform any cleanup or additional actions here
+    stage('Manual Approval'){
+        input message: 'Lanjutkan ke tahap Deploy?'
+    }
+
+    stage('Deploy') {
+        docker.image('six8/pyinstaller-alpine-linux-amd64:alpine-3.12-python-2.7-pyinstaller-v3.4').inside("--entrypoint=''") {
+            sh 'pyinstaller --onefile sources/add2vals.py'
         }
+        archiveArtifacts 'dist/add2vals'
+        sleep 60
     }
 }
